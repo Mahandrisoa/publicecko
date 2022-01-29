@@ -16,7 +16,6 @@ import {
 } from 'nexus'
 import { DateTimeResolver } from 'graphql-scalars'
 import { Context } from './context'
-import {VideoGame} from "./models/VideoGame";
 
 export const DateTime = asNexusMethod(DateTimeResolver, 'date')
 
@@ -113,10 +112,11 @@ const Query = objectType({
 
     t.nonNull.list.nonNull.field('allVideoGames', {
       type: 'VideoGame',
-      resolve: (_parent, args, context: Context) => {
+      resolve: async (_parent, args, context: Context) => {
         return context.prisma.videoGame.findMany()
       }
     })
+
 
     t.nullable.field('videoGameById', {
       type: 'VideoGame',
@@ -148,6 +148,50 @@ const Query = objectType({
               },
             })
             .videoGame({
+              where: {
+                published: false,
+              },
+            })
+      }
+    })
+
+    t.nonNull.list.nonNull.field('allAnnonces', {
+      type: 'Annonce',
+      resolve: (_parent, args, context: Context) => {
+        return context.prisma.annonce.findMany()
+      }
+    })
+
+    t.nullable.field('annonceById', {
+      type: 'Annonce',
+      args: {
+        id: intArg()
+      },
+      resolve: (_parent, args, context: Context) => {
+        return context.prisma.annonce.findUnique({
+          where: { id: args.id || undefined }
+        })
+      }
+    })
+
+    t.nonNull.list.nonNull.field('annonceByUser', {
+      type: 'Annonce',
+      args: {
+        userUniqueInput: nonNull(
+            arg({
+              type: 'UserUniqueInput',
+            }),
+        )
+      },
+      resolve: (_parent, args, context: Context) => {
+        return context.prisma.user
+            .findUnique({
+              where: {
+                id: args.userUniqueInput.id || undefined,
+                email: args.userUniqueInput.email || undefined,
+              },
+            })
+            .annonce({
               where: {
                 published: false,
               },
@@ -302,7 +346,7 @@ const Mutation = objectType({
             description: args.data.description,
             release_date: args.data.release_date,
             authorId: userId,
-            type: args.data.type
+            categories: args.data.categories
           },
         })
       },
@@ -315,7 +359,7 @@ const Mutation = objectType({
       },
       resolve: async (_, args, context: Context) => {
         try {
-          const post = await context.prisma.videoGame.findUnique({
+          const videoGame = await context.prisma.videoGame.findUnique({
             where: { id: args.id || undefined },
             select: {
               published: true,
@@ -323,7 +367,7 @@ const Mutation = objectType({
           })
           return context.prisma.videoGame.update({
             where: { id: args.id || undefined },
-            data: { published: !post?.published },
+            data: { published: !videoGame?.published },
           })
         } catch (e) {
           throw new Error(
@@ -340,6 +384,67 @@ const Mutation = objectType({
       },
       resolve: (_, args, context: Context) => {
         return context.prisma.videoGame.delete({
+          where: { id: args.id },
+        })
+      },
+    })
+
+    // Annonce
+    t.field('createAnnonce', {
+      type: 'Annonce',
+      args: {
+        data: nonNull(
+            arg({
+              type: 'AnnonceCreateInput',
+            }),
+        ),
+      },
+      resolve: (_, args, context: Context) => {
+        const userId = getUserId(context)
+        return context.prisma.annonce.create({
+          data: {
+            title: args.data.title,
+            description: args.data.description,
+            authorId: userId,
+            categories: args.data.categories,
+            ...(args.data.ratings) && {ratings: args.data.ratings} ,
+          },
+        })
+      },
+    })
+
+    t.field('togglePublishAnnonce', {
+      type: 'Annonce',
+      args: {
+        id: nonNull(intArg()),
+      },
+      resolve: async (_, args, context: Context) => {
+        try {
+          const annonce = await context.prisma.annonce.findUnique({
+            where: { id: args.id || undefined },
+            select: {
+              published: true,
+            },
+          })
+          return context.prisma.annonce.update({
+            where: { id: args.id || undefined },
+            data: { published: !annonce?.published },
+          })
+        } catch (e) {
+          throw new Error(
+              `Annonce with ID ${args.id} does not exist in the database.`,
+          )
+        }
+      },
+    })
+
+    t.field('deleteAnnonce', {
+      type: 'Annonce',
+      args: {
+        id: nonNull(intArg()),
+      },
+      resolve: (_, args, context: Context) => {
+        return context.prisma.annonce.delete({
           where: { id: args.id },
         })
       },
@@ -373,6 +478,7 @@ const User = objectType({
             .videoGame()
       }
     })
+    t.nonNull.list.nonNull.string('roles')
   },
 })
 
@@ -397,6 +503,52 @@ const Post = objectType({
       },
     })
   },
+})
+
+const Annonce = objectType({
+  name: 'Annonce',
+  definition(t) {
+    t.nonNull.int('id')
+    t.nonNull.string('title')
+    t.string('description')
+    t.nonNull.boolean('published')
+    t.field('author', {
+      type: 'User',
+      resolve: (parent, _, context: Context) => {
+        return context.prisma.annonce
+            .findUnique({
+              where: { id: parent.id || undefined },
+            })
+            .author()
+      },
+    })
+    t.nonNull.int('ratings')
+    t.nonNull.field('createdAt', { type: 'DateTime' })
+    t.nonNull.field('updatedAt', { type: 'DateTime' })
+    t.nonNull.list.nonNull.string('categories')
+  }
+})
+
+const VideoGame = objectType({
+  name: 'VideoGame',
+  definition(t) {
+    t.nonNull.int('id')
+    t.nonNull.string('title')
+    t.string('description')
+    t.nonNull.boolean('published')
+    t.field('author', {
+      type: 'User',
+      resolve: (parent, _, context: Context) => {
+        return context.prisma.videoGame
+            .findUnique({
+              where: { id: parent.id || undefined },
+            })
+            .author()
+      },
+    })
+    t.field('release_date', { type: 'DateTime'})
+    t.nonNull.list.nonNull.string('categories')
+  }
 })
 
 const SortOrder = enumType({
@@ -441,8 +593,18 @@ const VideoGameCreateInput = inputObjectType({
   definition(t) {
     t.nonNull.string('title')
     t.string('description')
-    t.nonNull.date('release_date')
-    t.nonNull.string('type')
+    t.date('release_date')
+    t.nonNull.list.nonNull.string('categories')
+  }
+})
+
+const AnnonceCreateInput = inputObjectType({
+  name: 'AnnonceCreateInput',
+  definition(t) {
+    t.nonNull.string('title')
+    t.string('description')
+    t.int('ratings')
+    t.nonNull.list.nonNull.string('categories')
   }
 })
 
@@ -461,11 +623,13 @@ const schemaWithoutPermissions = makeSchema({
     Post,
     User,
     VideoGame,
+    Annonce,
     AuthPayload,
     UserUniqueInput,
     UserCreateInput,
     PostCreateInput,
     VideoGameCreateInput,
+    AnnonceCreateInput,
     SortOrder,
     PostOrderByUpdatedAtInput,
     DateTime,

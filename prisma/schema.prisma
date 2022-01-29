@@ -8,13 +8,14 @@ datasource db {
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  email    String  @unique
-  password String
-  name     String?
-  posts    Post[]
+  id        Int         @id @default(autoincrement())
+  email     String      @unique
+  password  String
+  name      String?
+  posts     Post[]
   videoGame VideoGame[]
-  roles    String[]
+  roles     String[]
+  annonce   Annonce[]
 }
 
 model Post {
@@ -36,6 +37,19 @@ model VideoGame {
   published    Boolean  @default(false)
   author       User?    @relation(fields: [authorId], references: [id])
   authorId     Int?
-  release_date DateTime
-  type         String
+  release_date DateTime?
+  categories   String[]
+}
+
+model Annonce {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  published   Boolean  @default(false)
+  author      User?    @relation(fields: [authorId], references: [id])
+  authorId    Int?
+  ratings     Int?      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  categories  String[]
 }

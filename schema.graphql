@@ -2,6 +2,25 @@
 ### Do not make changes to this file directly
 
 
+type Annonce {
+  author: User
+  categories: [String!]!
+  createdAt: DateTime!
+  description: String
+  id: Int!
+  published: Boolean!
+  ratings: Int!
+  title: String!
+  updatedAt: DateTime!
+}
+
+input AnnonceCreateInput {
+  categories: [String!]!
+  description: String
+  ratings: Int
+  title: String!
+}
+
 type AuthPayload {
   token: String
   user: User
@@ -13,13 +32,16 @@ A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `dat
 scalar DateTime
 
 type Mutation {
+  createAnnonce(data: AnnonceCreateInput!): Annonce
   createDraft(data: PostCreateInput!): Post
   createVideoGame(data: VideoGameCreateInput!): VideoGame
+  deleteAnnonce(id: Int!): Annonce
   deletePost(id: Int!): Post
   deleteVideoGame(id: Int!): VideoGame
   incrementPostViewCount(id: Int!): Post
   login(email: String!, password: String!): AuthPayload
   signup(email: String!, name: String, password: String!): AuthPayload
+  togglePublishAnnonce(id: Int!): Annonce
   togglePublishPost(id: Int!): Post
   togglePublishVideoGame(id: Int!): VideoGame
 }
@@ -45,8 +67,11 @@ input PostOrderByUpdatedAtInput {
 }
 
 type Query {
+  allAnnonces: [Annonce!]!
   allUsers: [User!]!
   allVideoGames: [VideoGame!]!
+  annonceById(id: Int): Annonce
+  annonceByUser(userUniqueInput: UserUniqueInput!): [Annonce!]!
   draftsByUser(userUniqueInput: UserUniqueInput!): [Post]
   feed(orderBy: PostOrderByUpdatedAtInput, searchString: String, skip: Int, take: Int): [Post!]!
   me: User
@@ -65,6 +90,7 @@ type User {
   id: Int!
   name: String
   posts: [Post!]!
+  roles: [String!]!
   videoGames: [VideoGame!]!
 }
 
@@ -81,17 +107,17 @@ input UserUniqueInput {
 
 type VideoGame {
   author: User
+  categories: [String!]!
   description: String
   id: Int!
   published: Boolean!
-  release_date: DateTime!
+  release_date: DateTime
   title: String!
-  type: String!
 }
 
 input VideoGameCreateInput {
+  categories: [String!]!
   description: String
-  release_date: DateTime!
+  release_date: DateTime
   title: String!
-  type: String!
 }
