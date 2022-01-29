@@ -1,6 +1,6 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: [ 'build', '-t', 'gcr.io/practicalmlops/exercise-one', '.' ]
+    args: [ 'build', '-t', 'gcr.io/publicecko/api', '.' ]
   - name: 'gcr.io/cloud-builders/docker'
     args: [ 'push', 'gcr.io/publicecko/api' ]
 images: [ 'gcr.io/publicecko/api' ]
