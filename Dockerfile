@@ -3,6 +3,8 @@ FROM node:16-alpine
 # Create app directory
 WORKDIR /usr/src/publicecko_api
 
+COPY package*.json ./
+
 COPY . .
 
 RUN npm install && npm run build
