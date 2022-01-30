@@ -4,6 +4,7 @@ FROM node:16-alpine AS appBuild
 WORKDIR /usr/src/publicecko_api
 
 COPY package*.json ./
+COPY . .
 
 RUN npm install
 
