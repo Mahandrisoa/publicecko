@@ -5,8 +5,8 @@
     "dev": "ts-node-dev --no-notify --respawn --transpile-only src/server",
     "start": "node dist/server",
     "clean": "rm -rf dist",
-    "build": "npm -s run clean && npm -s run generate",
-    "generate": "npm -s run generate:prisma && npm -s run generate:nexus",
+    "build": "npm -s run clean && npm -s run generate && tsc",
+    "generate": "npm -s run generate:prisma && npm -s run generate:nexus && tsc",
     "generate:prisma": "prisma generate --schema prisma/schema.prisma",
     "generate:nexus": "ts-node --transpile-only src/schema"
   },

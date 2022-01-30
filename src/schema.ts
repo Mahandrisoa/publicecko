@@ -157,6 +157,7 @@ const Query = objectType({
 
     t.nonNull.list.nonNull.field('allAnnonces', {
       type: 'Annonce',
+      // @ts-ignore
       resolve: (_parent, args, context: Context) => {
         return context.prisma.annonce.findMany()
       }
@@ -167,6 +168,7 @@ const Query = objectType({
       args: {
         id: intArg()
       },
+      // @ts-ignore
       resolve: (_parent, args, context: Context) => {
         return context.prisma.annonce.findUnique({
           where: { id: args.id || undefined }
@@ -183,6 +185,7 @@ const Query = objectType({
             }),
         )
       },
+      // @ts-ignore
       resolve: (_parent, args, context: Context) => {
         return context.prisma.user
             .findUnique({
@@ -399,6 +402,7 @@ const Mutation = objectType({
             }),
         ),
       },
+      // @ts-ignore
       resolve: (_, args, context: Context) => {
         const userId = getUserId(context)
         return context.prisma.annonce.create({
@@ -418,6 +422,7 @@ const Mutation = objectType({
       args: {
         id: nonNull(intArg()),
       },
+      // @ts-ignore
       resolve: async (_, args, context: Context) => {
         try {
           const annonce = await context.prisma.annonce.findUnique({
@@ -443,6 +448,7 @@ const Mutation = objectType({
       args: {
         id: nonNull(intArg()),
       },
+      // @ts-ignore
       resolve: (_, args, context: Context) => {
         return context.prisma.annonce.delete({
           where: { id: args.id },
